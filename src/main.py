@@ -13,36 +13,20 @@ logger = logging.getLogger(__name__)
 
 class RepoInsight:
     def __init__(self, github_token: str, openai_api_key: str):
-        """
-        Initialize RepoInsight with GitHub and OpenAI API tokens.
-
-        Args:
-            github_token (str): GitHub API token.
-            openai_api_key (str): OpenAI API key.
-        """
         self.github_api = GitHubAPI(github_token)
         self.code_analyzer = CodeAnalyzer()
         self.doc_extractor = DocExtractor()
         self.insight_generator = InsightGenerator(api_key=openai_api_key)
 
     def analyze_repository(self, repo_url: str) -> str:
-        """
-        Analyze a GitHub repository and generate a comprehensive description.
-
-        Args:
-            repo_url (str): The URL of the GitHub repository.
-
-        Returns:
-            str: The generated repository description or an error message.
-        """
         logger.info(f"Starting analysis for repository: {repo_url}")
         try:
-repo = self.github_api.get_repository(repo_url)
+            repo = self.github_api.get_repository(repo_url)
             if not repo:
                 logger.error("Failed to access repository.")
                 return "Failed to access repository."
 
-structure = self.github_api.get_repository_structure(repo)
+            structure = self.github_api.get_repository_structure(repo)
             if not structure:
                 logger.error("Failed to retrieve repository structure.")
                 return "Failed to retrieve repository structure."
@@ -51,18 +35,24 @@ structure = self.github_api.get_repository_structure(repo)
             code_analysis = self.analyze_code_files(repo, structure)
             doc_analysis = self.analyze_documentation(repo, structure)
             api_analysis = self.analyze_api(repo, structure)
+            issues = self.github_api.get_issues(repo)
+            pull_requests = self.github_api.get_pull_requests(repo)
 
-            aggregated_info = self.aggregate_information(
-                analysis_result, code_analysis, doc_analysis, api_analysis
-            )
+            # Combine all analyses and generate insights
+            combined_analysis = {
+                "structure": analysis_result,
+                "code": code_analysis,
+                "documentation": doc_analysis,
+                "api": api_analysis,
+                "issues": issues,
+                "pull_requests": pull_requests
+            }
 
-            description = self.insight_generator.generate_description(aggregated_info)
-            logger.info("Repository analysis completed successfully.")
-            return description
+            return self.insight_generator.generate_insights(combined_analysis)
+
         except Exception as e:
-            logger.error(f"An unexpected error occurred: {e}")
-            return "An unexpected error occurred during repository analysis."
-
+            logger.error(f"An error occurred during repository analysis: {str(e)}")
+            return f"An error occurred during repository analysis: {str(e)}"
     def analyze_structure(self, structure: Dict[str, Any]) -> Dict[str, Any]:
         """
         Analyze the structure of the repository.
