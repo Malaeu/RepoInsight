@@ -1,0 +1,5 @@
+requests
+PyGithub
+pyyaml
+openai
+beautifulsoup4

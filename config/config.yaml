@@ -1,0 +1,9 @@
+github:
+  api_token: "your_github_api_token_here"
+
+openai:
+  api_key: "your_openai_api_key_here"
+
+analysis:
+  max_file_size: 1000000  # in bytes
+  supported_languages: ["python", "javascript", "java"]
