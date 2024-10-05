@@ -77,7 +77,17 @@ class RepoInsight:
         return {'structure': structure}
 
     def analyze_code_files(self, repo: Any, structure: Dict[str, Any]) -> Dict[str, Any]:
+"""
+        Analyze code files in the repository.
+        
+        Args:
+            repo (Any): The GitHub repository object.
+            structure (Dict[str, Any]): The repository structure.
+        
+        Returns:
+            Dict[str, Any]: Code analysis results.
         """
+                """
         Analyze code files in the repository.
 
         Args:
