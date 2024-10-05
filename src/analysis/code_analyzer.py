@@ -17,7 +17,7 @@ class CodeAnalyzer(ast.NodeVisitor):
             'assignments': 0
         }
 
-    def analyze_python_file(self, content: str) -> Optional[Dict[str, int]]:
+analysis = self.code_analyzer.analyze_python_file(content)
         """
         Analyze a Python file's content and gather statistics.
 

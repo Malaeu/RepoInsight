@@ -37,12 +37,12 @@ class RepoInsight:
         """
         logger.info(f"Starting analysis for repository: {repo_url}")
         try:
-            repo = self.github_api.get_repository(repo_url)
+repo = self.github_api.get_repository(repo_url)
             if not repo:
                 logger.error("Failed to access repository.")
                 return "Failed to access repository."
 
-            structure = self.github_api.get_repository_structure(repo)
+structure = self.github_api.get_repository_structure(repo)
             if not structure:
                 logger.error("Failed to retrieve repository structure.")
                 return "Failed to retrieve repository structure."
