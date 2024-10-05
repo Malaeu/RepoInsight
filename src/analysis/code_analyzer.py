@@ -1,20 +1,25 @@
 import ast
 import logging
-from collections import defaultdict
 from typing import Optional, Dict
 
 logger = logging.getLogger(__name__)
 
-class CodeAnalyzer:
-    def __init__(self):
-        self.reset_stats()
+class CodeAnalyzer(ast.NodeVisitor):
+    """
+    Analyzes Python code content and gathers statistics on functions, classes, imports, and assignments.
+    """
 
-    def reset_stats(self):
-        self.stats = defaultdict(int)
+    def __init__(self):
+        self.stats = {
+            'functions': 0,
+            'classes': 0,
+            'imports': 0,
+            'assignments': 0
+        }
 
     def analyze_python_file(self, content: str) -> Optional[Dict[str, int]]:
         """
-        Analyze a Python file's content and gather statistics on functions, classes, imports, and assignments.
+        Analyze a Python file's content and gather statistics.
 
         Args:
             content (str): The content of the Python file.
@@ -26,31 +31,81 @@ class CodeAnalyzer:
         try:
             tree = ast.parse(content)
             self.visit(tree)
-            return dict(self.stats)
+            return self.stats.copy()
         except SyntaxError as e:
-            logger.error(f"Syntax error in Python file: {e}")
+            logger.error(f"Syntax error in Python file: {e.text.strip()} at line {e.lineno}")
             return None
 
-    def visit(self, node: ast.AST):
+    def reset_stats(self):
         """
-        Recursively visit AST nodes to count functions, classes, imports, and assignments.
+        Resets the statistics counters.
+        """
+        self.stats = {
+            'functions': 0,
+            'classes': 0,
+            'imports': 0,
+            'assignments': 0
+        }
+
+    def visit_FunctionDef(self, node: ast.FunctionDef):
+        """
+        Count function definitions.
 
         Args:
-            node (ast.AST): The current AST node.
+            node (ast.FunctionDef): The function definition node.
         """
-        for child in ast.iter_child_nodes(node):
-            self.visit(child)
-        
-        if isinstance(node, ast.FunctionDef):
-            self.stats['functions'] += 1
-        elif isinstance(node, ast.AsyncFunctionDef):
-            self.stats['functions'] += 1  # Counting async functions as well
-        elif isinstance(node, ast.ClassDef):
-            self.stats['classes'] += 1
-        elif isinstance(node, (ast.Import, ast.ImportFrom)):
-            self.stats['imports'] += 1
-        elif isinstance(node, ast.Assign):
-            self.stats['assignments'] += 1
+        self.stats['functions'] += 1
+        self.generic_visit(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
+        """
+        Count async function definitions.
+
+        Args:
+            node (ast.AsyncFunctionDef): The async function definition node.
+        """
+        self.stats['functions'] += 1
+        self.generic_visit(node)
+
+    def visit_ClassDef(self, node: ast.ClassDef):
+        """
+        Count class definitions.
+
+        Args:
+            node (ast.ClassDef): The class definition node.
+        """
+        self.stats['classes'] += 1
+        self.generic_visit(node)
+
+    def visit_Import(self, node: ast.Import):
+        """
+        Count import statements.
+
+        Args:
+            node (ast.Import): The import statement node.
+        """
+        self.stats['imports'] += 1
+        self.generic_visit(node)
+
+    def visit_ImportFrom(self, node: ast.ImportFrom):
+        """
+        Count import-from statements.
+
+        Args:
+            node (ast.ImportFrom): The import-from statement node.
+        """
+        self.stats['imports'] += 1
+        self.generic_visit(node)
+
+    def visit_Assign(self, node: ast.Assign):
+        """
+        Count assignment statements.
+
+        Args:
+            node (ast.Assign): The assignment statement node.
+        """
+        self.stats['assignments'] += 1
+        self.generic_visit(node)
 
     def get_summary(self) -> str:
         """
