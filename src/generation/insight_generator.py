@@ -24,14 +24,18 @@ class InsightGenerator:
         """
         Initialize the InsightGenerator.
 
-        Parameters:
+        Args:
             api_key (Optional[str]): OpenAI API key. If None, it will try to use the OPENAI_API_KEY environment variable.
             model (str): OpenAI model to use.
             max_tokens (int): Maximum number of tokens in the generated response.
             temperature (float): Sampling temperature.
+
+        Raises:
+            ValueError: If no OpenAI API key is provided.
         """
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not self.api_key:
+            logger.error("OpenAI API key must be provided.")
             raise ValueError("OpenAI API key must be provided.")
         self.model = model
         self.max_tokens = max_tokens
@@ -47,13 +51,12 @@ class InsightGenerator:
         """
         Generate a detailed project description based on the aggregated information.
 
-        Parameters:
+        Args:
             aggregated_info (Dict[str, Any]): Aggregated data about the repository.
 
         Returns:
             str: The generated project description.
         """
-        # Validate input
         if not isinstance(aggregated_info, dict):
             logger.error("aggregated_info must be a dictionary.")
             return "Invalid input data."
@@ -67,7 +70,9 @@ class InsightGenerator:
                 max_tokens=self.max_tokens,
                 temperature=self.temperature,
             )
-            return response.choices[0].message['content'].strip()
+            description = response.choices[0].message['content'].strip()
+            logger.info("Description generated successfully.")
+            return description
         except openai.error.OpenAIError as e:
             logger.error(f"An error occurred: {e}")
             return "An error occurred while generating the description."
@@ -76,7 +81,7 @@ class InsightGenerator:
         """
         Create a prompt for the AI model based on the aggregated repository information.
 
-        Parameters:
+        Args:
             aggregated_info (Dict[str, Any]): Aggregated data about the repository.
 
         Returns:
@@ -96,15 +101,15 @@ class InsightGenerator:
             "Please include the project's purpose, main features, architecture, and usage instructions in the description."
         ]
 
-        # Join the prompt sections with double newlines
         prompt = '\n\n'.join(prompt_sections)
+        logger.debug("Prompt created for AI model.")
         return prompt
 
     def format_structure(self, structure: Dict[str, Any], indent_level: int = 0) -> str:
         """
         Recursively format the repository structure into a tree-like representation.
 
-        Parameters:
+        Args:
             structure (Dict[str, Any]): Nested dictionary representing the repository structure.
             indent_level (int): Current indentation level for recursive calls.
 
@@ -114,7 +119,6 @@ class InsightGenerator:
         formatted = ""
         indent = "  " * indent_level
         for name, content in structure.items():
-            # Preventing potential issues with non-string keys
             name_str = str(name)
             if isinstance(content, dict):
                 formatted += f"{indent}- {name_str}/\n"
@@ -128,7 +132,7 @@ class InsightGenerator:
         """
         Format the code analysis section.
 
-        Parameters:
+        Args:
             code_analysis (Dict[str, Any]): Code analysis data.
 
         Returns:
@@ -140,7 +144,7 @@ class InsightGenerator:
         formatted_entries = []
         for file, analysis in code_analysis.items():
             if not isinstance(analysis, dict):
-                continue  # Skip invalid entries
+                continue
             entry = [f"- **File:** {file}"]
             for key, value in analysis.items():
                 entry.append(f"  - {key}: {value}")
@@ -151,7 +155,7 @@ class InsightGenerator:
         """
         Format the documentation analysis section.
 
-        Parameters:
+        Args:
             doc_analysis (Dict[str, Any]): Documentation analysis data.
 
         Returns:
@@ -163,7 +167,7 @@ class InsightGenerator:
         formatted_entries = []
         for file, analysis in doc_analysis.items():
             if not isinstance(analysis, dict):
-                continue  # Skip invalid entries
+                continue
             entry = [f"- **File:** {file}"]
             for key, value in analysis.items():
                 entry.append(f"  - {key}: {value}")
@@ -174,7 +178,7 @@ class InsightGenerator:
         """
         Format the API analysis section.
 
-        Parameters:
+        Args:
             api_analysis (Dict[str, Any]): API analysis data.
 
         Returns:
@@ -186,11 +190,9 @@ class InsightGenerator:
         formatted_entries = []
         for endpoint, details in api_analysis.items():
             if not isinstance(details, dict):
-                continue  # Skip invalid entries
+                continue
             entry = [f"- **Endpoint:** {endpoint}"]
             for key, value in details.items():
                 entry.append(f"  - {key}: {value}")
             formatted_entries.append('\n'.join(entry))
         return '\n\n'.join(formatted_entries)
-                formatted += f"  - {key}: {value}\n"
-        return formatted.strip()
